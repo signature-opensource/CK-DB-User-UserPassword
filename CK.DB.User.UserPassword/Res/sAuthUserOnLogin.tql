@@ -1,0 +1,17 @@
+-- SetupConfig: {}
+create transformer on CK.sAuthUserOnLogin
+as
+begin
+	inject "
+    -- FailedAttemptCount increment is hendled here to centralize 
+    -- code in CK.sAuthUserOnLogin as much as possible.
+		if @Scheme = 'Basic'
+    begin
+      -- By default, any login failure triggers a FailedAttemptCount increment.
+      update CK.tUserPassword set FailedAttemptCount = FailedAttemptCount+1
+        where UserId = @UserId and FailedAttemptCount < 255;
+    end
+	" 
+	into "LoginFailed";
+end
+
