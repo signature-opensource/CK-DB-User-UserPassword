@@ -21,7 +21,7 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public void standard_generic_tests_for_Basic_provider()
         {
-            var auth = TestHelper.StObjMap.Default.Obtain<Auth.Package>();
+            var auth = TestHelper.StObjMap.StObjs.Obtain<Auth.Package>();
             CK.DB.Auth.Tests.AuthTests.StandardTestForGenericAuthenticationProvider(
                 auth,
                 "Basic",
@@ -34,8 +34,8 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public void Generic_to_Basic_provider_with_userId_as_double_or_as_string()
         {
-            var user = TestHelper.StObjMap.Default.Obtain<UserTable>();
-            var auth = TestHelper.StObjMap.Default.Obtain<Auth.Package>();
+            var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
+            var auth = TestHelper.StObjMap.StObjs.Obtain<Auth.Package>();
             var basic = auth.FindProvider( "Basic" );
             using( var ctx = new SqlStandardCallContext() )
             {
@@ -56,7 +56,7 @@ namespace CK.DB.User.UserPassword.Tests
 
         public async Task standard_generic_tests_for_Basic_provider_Async()
         {
-            var auth = TestHelper.StObjMap.Default.Obtain<Auth.Package>();
+            var auth = TestHelper.StObjMap.StObjs.Obtain<Auth.Package>();
             await Auth.Tests.AuthTests.StandardTestForGenericAuthenticationProviderAsync(
                 auth,
                 "Basic",
@@ -69,8 +69,8 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public async Task standard_generic_tests_for_Basic_provider_Async_with_migrator()
         {
-            var auth = TestHelper.StObjMap.Default.Obtain<Auth.Package>();
-            var p = TestHelper.StObjMap.Default.Obtain<Package>();
+            var auth = TestHelper.StObjMap.StObjs.Obtain<Auth.Package>();
+            var p = TestHelper.StObjMap.StObjs.Obtain<Package>();
             using( Util.CreateDisposableAction( () => p.PasswordMigrator = null ) )
             {
                 p.PasswordMigrator = new MigrationSupport( 0, "" );
@@ -88,8 +88,8 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public void create_password_and_check_Verify_method()
         {
-            var u = TestHelper.StObjMap.Default.Obtain<UserPasswordTable>();
-            var user = TestHelper.StObjMap.Default.Obtain<UserTable>();
+            var u = TestHelper.StObjMap.StObjs.Obtain<UserPasswordTable>();
+            var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( var ctx = new SqlStandardCallContext() )
             {
                 var userName = Guid.NewGuid().ToString();
@@ -111,7 +111,7 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public void create_a_password_for_an_anonymous_user_is_an_error()
         {
-            var u = TestHelper.StObjMap.Default.Obtain<UserPasswordTable>();
+            var u = TestHelper.StObjMap.StObjs.Obtain<UserPasswordTable>();
             using( var ctx = new SqlStandardCallContext() )
             {
                 u.Invoking( sut => sut.CreateOrUpdatePasswordUser( ctx, 1, 0, "x" ) ).Should().Throw<SqlDetailedException>();
@@ -124,8 +124,8 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public void destroying_a_user_destroys_its_PasswordUser_facet()
         {
-            var u = TestHelper.StObjMap.Default.Obtain<UserPasswordTable>();
-            var user = TestHelper.StObjMap.Default.Obtain<UserTable>();
+            var u = TestHelper.StObjMap.StObjs.Obtain<UserPasswordTable>();
+            var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( var ctx = new SqlStandardCallContext() )
             {
                 int userId = user.CreateUser( ctx, 1, Guid.NewGuid().ToString() );
@@ -140,8 +140,8 @@ namespace CK.DB.User.UserPassword.Tests
         [TestCase( "deefzrfgebhntjuykilompo^ùp$*pù^mlkjhgf250258p" )]
         public void changing_iteration_count_updates_automatically_the_hash( string pwd )
         {
-            var u = TestHelper.StObjMap.Default.Obtain<UserPasswordTable>();
-            var user = TestHelper.StObjMap.Default.Obtain<UserTable>();
+            var u = TestHelper.StObjMap.StObjs.Obtain<UserPasswordTable>();
+            var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( var ctx = new SqlStandardCallContext() )
             {
                 UserPasswordTable.HashIterationCount = 1000;
@@ -169,8 +169,8 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public void UserPassword_implements_IBasicAuthenticationProvider()
         {
-            var basic = TestHelper.StObjMap.Default.Obtain<IBasicAuthenticationProvider>();
-            var user = TestHelper.StObjMap.Default.Obtain<UserTable>();
+            var basic = TestHelper.StObjMap.StObjs.Obtain<IBasicAuthenticationProvider>();
+            var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( var ctx = new SqlStandardCallContext() )
             {
                 string name = Guid.NewGuid().ToString();
@@ -199,8 +199,8 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public async Task UserPassword_implements_IBasicAuthenticationProvider_async()
         {
-            var basic = TestHelper.StObjMap.Default.Obtain<IBasicAuthenticationProvider>();
-            var user = TestHelper.StObjMap.Default.Obtain<UserTable>();
+            var basic = TestHelper.StObjMap.StObjs.Obtain<IBasicAuthenticationProvider>();
+            var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( var ctx = new SqlStandardCallContext() )
             {
                 string name = Guid.NewGuid().ToString();
@@ -250,9 +250,9 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public void password_migration_is_supported_by_user_id_and_user_name()
         {
-            var p = TestHelper.StObjMap.Default.Obtain<Package>();
-            var u = TestHelper.StObjMap.Default.Obtain<UserPasswordTable>();
-            var user = TestHelper.StObjMap.Default.Obtain<UserTable>();
+            var p = TestHelper.StObjMap.StObjs.Obtain<Package>();
+            var u = TestHelper.StObjMap.StObjs.Obtain<UserPasswordTable>();
+            var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( Util.CreateDisposableAction( () => p.PasswordMigrator = null ) )
             using( var ctx = new SqlStandardCallContext() )
             {
@@ -318,9 +318,9 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public async Task password_migration_is_supported_by_user_id_and_user_name_async()
         {
-            var p = TestHelper.StObjMap.Default.Obtain<Package>();
-            var u = TestHelper.StObjMap.Default.Obtain<UserPasswordTable>();
-            var user = TestHelper.StObjMap.Default.Obtain<UserTable>();
+            var p = TestHelper.StObjMap.StObjs.Obtain<Package>();
+            var u = TestHelper.StObjMap.StObjs.Obtain<UserPasswordTable>();
+            var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( Util.CreateDisposableAction( () => p.PasswordMigrator = null ) )
             using( var ctx = new SqlStandardCallContext() )
             {
@@ -386,8 +386,8 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public void onLogin_extension_point_is_called()
         {
-            var u = TestHelper.StObjMap.Default.Obtain<UserPasswordTable>();
-            var user = TestHelper.StObjMap.Default.Obtain<UserTable>();
+            var u = TestHelper.StObjMap.StObjs.Obtain<UserPasswordTable>();
+            var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( var ctx = new SqlStandardCallContext() )
             {
                 // By name
@@ -418,8 +418,8 @@ namespace CK.DB.User.UserPassword.Tests
         [Test]
         public void vUserAuthProvider_reflects_the_user_basic_authentication()
         {
-            var u = TestHelper.StObjMap.Default.Obtain<UserPasswordTable>();
-            var user = TestHelper.StObjMap.Default.Obtain<UserTable>();
+            var u = TestHelper.StObjMap.StObjs.Obtain<UserPasswordTable>();
+            var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( var ctx = new SqlStandardCallContext() )
             {
                 string userName = "Basic auth - " + Guid.NewGuid().ToString();
