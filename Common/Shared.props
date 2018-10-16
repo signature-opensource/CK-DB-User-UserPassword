@@ -2,7 +2,7 @@
   <!-- Centralized version dependencies. -->
   <PropertyGroup>
     <CKDatabaseVersion>7.1.0</CKDatabaseVersion>
-    <CKDBVersion>3.0.1--0016-develop</CKDBVersion>
+    <CKDBVersion>3.0.1--0019-local</CKDBVersion>
   </PropertyGroup>
   <!-- SharedDir is the /Common directory. -->
   <PropertyGroup>
