@@ -2,7 +2,7 @@
   <!-- Centralized version dependencies. -->
   <PropertyGroup>
     <CKDatabaseVersion>7.1.0</CKDatabaseVersion>
-    <CKDBVersion>5.1.0</CKDBVersion>
+    <CKDBVersion>0.0.0--02bke5g-local</CKDBVersion>
   </PropertyGroup>
   <!-- Exclude CKSetup-WorkingDir folder. -->
   <ItemGroup>
@@ -48,7 +48,7 @@
   <!--<ReproducibleBuilds>: See http://blog.paranoidcoding.com/2016/04/05/deterministic-builds-in-roslyn.html.-->
   <PropertyGroup Condition=" '$(CakeBuild)' == 'true' ">
     <Deterministic>true</Deterministic>
-    <PathMap>$(SolutionDir)=C:\CKli-World\CK-Database-Projects\CK-DB-User-UserPassword</PathMap>
+    <PathMap>'$(SolutionDir)'=C:\CKli-World\CK-Database-Projects\CK-DB-User-UserPassword</PathMap>
   </PropertyGroup>
   <!--</ReproducibleBuilds>-->
   <!--<ZeroVersion>: When not building from the CI, assemblies always use the ZeroVersion (see CSemVer.InformationalVersion).-->
