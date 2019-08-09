@@ -2,7 +2,7 @@
   <!-- Centralized version dependencies. -->
   <PropertyGroup>
     <CKDatabaseVersion>7.1.0</CKDatabaseVersion>
-    <CKDBVersion>5.1.0</CKDBVersion>
+    <CKDBVersion>5.2.0</CKDBVersion>
   </PropertyGroup>
   <!-- Exclude CKSetup-WorkingDir folder. -->
   <ItemGroup>
@@ -19,7 +19,7 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup Condition=" '$(CakeBuild)' == 'true' ">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All" />
   </ItemGroup>
   <!--</SourceLink>-->
   <!--<BasicDefinitions>: It is useful to knwow whether we are in the Tests/ folder and/or if the current project is a Test.-->
@@ -47,10 +47,9 @@
   <!--</StandardProperties>-->
   <!--<ReproducibleBuilds>: See http://blog.paranoidcoding.com/2016/04/05/deterministic-builds-in-roslyn.html.-->
   <PropertyGroup Condition=" '$(CakeBuild)' == 'true' ">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     <Deterministic>true</Deterministic>
-    <!-- Finds the CKli-World.htm that must exist at the root of the development directory. This is path to map to C:\CKli-World. -->
-    <CKliWorldPath>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), CKli-World.htm))</CKliWorldPath>
-    <PathMap Condition=" '$(CKliWorldPath)' != '' ">$(CKliWorldPath)=C:\CKli-World</PathMap>
+    <PathMap>'$(SolutionDir)'=C:\CKli-World\CK-Database-Projects\CK-DB-User-UserPassword</PathMap>
   </PropertyGroup>
   <!--</ReproducibleBuilds>-->
   <!--<ZeroVersion>: When not building from the CI, assemblies always use the ZeroVersion (see CSemVer.InformationalVersion).-->
