@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CK.DB.User.UserPassword
+﻿namespace CK.DB.User.UserPassword
 {
     /// <summary>
     /// Specifies the results for password verification.

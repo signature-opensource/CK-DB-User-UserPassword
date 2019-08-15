@@ -1,16 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using CK.Setup;
 using CK.SqlServer;
-using CK.SqlServer.Setup;
+using CK.Core;
 using CK.DB.Auth;
 using System.Threading;
-using CK.Core;
 
 namespace CK.DB.User.UserPassword
 {
@@ -64,7 +58,7 @@ namespace CK.DB.User.UserPassword
         /// <summary>
         /// Gets the User password package.
         /// </summary>
-        [InjectContract]
+        [InjectObject]
         public Package UserPasswordPackage { get; protected set; }
 
         /// <summary>
