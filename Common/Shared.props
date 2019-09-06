@@ -2,7 +2,7 @@
   <!-- Centralized version dependencies. -->
   <PropertyGroup>
     <CKDatabaseVersion>7.1.0</CKDatabaseVersion>
-    <CKDBVersion>6.0.0-a00-00-0007-develop</CKDBVersion>
+    <CKDBVersion>0.0.0--02fyico-local+v6.0.0-a</CKDBVersion>
   </PropertyGroup>
   <!-- Exclude CKSetup-WorkingDir folder. -->
   <ItemGroup>
