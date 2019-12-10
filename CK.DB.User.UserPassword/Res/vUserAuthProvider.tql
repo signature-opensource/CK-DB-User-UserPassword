@@ -1,4 +1,4 @@
--- SetupConfig: { "AddRequires": "Model.CK.UserPasswordTable" } 
+-- SetupConfig: { } 
 -- 
 create transformer on CK.vUserAuthProvider
 as
@@ -6,6 +6,6 @@ begin
 	inject "
 	union all
   -- Ignores empty PwdHash since they are failed password migration.
-	select UserId, 'Basic', case LastLoginTime when '0001-01-01' then null else LastLoginTime end from CK.tUserPassword where UserId > 0 and PwdHash != 0x
+	select UserId, 'Basic', LastLoginTime from CK.tUserPassword where UserId > 0 and PwdHash != 0x
 	" after first part {select};
 end
