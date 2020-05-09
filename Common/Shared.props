@@ -1,8 +1,8 @@
-﻿<Project>
+<Project>
   <!-- Centralized version dependencies. -->
   <PropertyGroup>
     <CKDatabaseVersion>7.1.0</CKDatabaseVersion>
-    <CKDBVersion>8.2.1--0012-develop</CKDBVersion>
+    <CKDBVersion>8.2.1--0014-develop</CKDBVersion>
   </PropertyGroup>
   <!-- Exclude CKSetup-WorkingDir folder. -->
   <ItemGroup>
