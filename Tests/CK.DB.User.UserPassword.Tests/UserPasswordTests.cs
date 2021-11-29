@@ -1,5 +1,5 @@
 using System;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 using CK.Core;
 using CK.DB.Actor;
@@ -397,7 +397,7 @@ namespace CK.DB.User.UserPassword.Tests
                     var baseTime = u.Database.ExecuteScalar<DateTime>( "select sysutcdatetime();" );
                     u.CreateOrUpdatePasswordUser( ctx, 1, idU, "password", UCLMode.CreateOrUpdate | UCLMode.WithActualLogin );
                     var firstTime = u.Database.ExecuteScalar<DateTime>( $"select LastLoginTime from CK.tUserPassword where UserId={idU}" );
-                    firstTime.Should().BeCloseTo( baseTime, 1000 );
+                    firstTime.Should().BeCloseTo( baseTime, TimeSpan.FromSeconds( 1 ) );
                     Thread.Sleep( 100 );
                     u.LoginUser( ctx, userName, "failed login", actualLogin: true ).UserId.Should().Be( 0 );
                     var firstTimeNo = u.Database.ExecuteScalar<DateTime>( $"select LastLoginTime from CK.tUserPassword where UserId={idU}" );
