@@ -1,5 +1,5 @@
 using System;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 using CK.Core;
 using CK.DB.Actor;
@@ -144,13 +144,13 @@ namespace CK.DB.User.UserPassword.Tests
             var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( var ctx = new SqlStandardCallContext() )
             {
-                UserPasswordTable.HashIterationCount = 1000;
+                UserPasswordTable.HashIterationCount = 5000;
                 var userName = Guid.NewGuid().ToString();
                 int userId = user.CreateUser( ctx, 1, userName );
                 u.CreateOrUpdatePasswordUser( ctx, 1, userId, pwd );
                 var hash1 = u.Database.ExecuteScalar<byte[]>( $"select PwdHash from CK.tUserPassword where UserId={userId}" );
 
-                UserPasswordTable.HashIterationCount = 2000;
+                UserPasswordTable.HashIterationCount = 50000;
                 u.LoginUser( ctx, userId, pwd ).UserId.Should().Be( userId );
                 var hash2 = u.Database.ExecuteScalar<byte[]>( $"select PwdHash from CK.tUserPassword where UserId={userId}" );
 
@@ -397,7 +397,7 @@ namespace CK.DB.User.UserPassword.Tests
                     var baseTime = u.Database.ExecuteScalar<DateTime>( "select sysutcdatetime();" );
                     u.CreateOrUpdatePasswordUser( ctx, 1, idU, "password", UCLMode.CreateOrUpdate | UCLMode.WithActualLogin );
                     var firstTime = u.Database.ExecuteScalar<DateTime>( $"select LastLoginTime from CK.tUserPassword where UserId={idU}" );
-                    firstTime.Should().BeCloseTo( baseTime, 1000 );
+                    firstTime.Should().BeCloseTo( baseTime, TimeSpan.FromSeconds( 1 ) );
                     Thread.Sleep( 100 );
                     u.LoginUser( ctx, userName, "failed login", actualLogin: true ).UserId.Should().Be( 0 );
                     var firstTimeNo = u.Database.ExecuteScalar<DateTime>( $"select LastLoginTime from CK.tUserPassword where UserId={idU}" );

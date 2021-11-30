@@ -1,5 +1,5 @@
 using System;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using CK.SqlServer;
 using CK.Core;
 using CK.DB.Auth;
