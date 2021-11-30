@@ -144,13 +144,13 @@ namespace CK.DB.User.UserPassword.Tests
             var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
             using( var ctx = new SqlStandardCallContext() )
             {
-                UserPasswordTable.HashIterationCount = 1000;
+                UserPasswordTable.HashIterationCount = 5000;
                 var userName = Guid.NewGuid().ToString();
                 int userId = user.CreateUser( ctx, 1, userName );
                 u.CreateOrUpdatePasswordUser( ctx, 1, userId, pwd );
                 var hash1 = u.Database.ExecuteScalar<byte[]>( $"select PwdHash from CK.tUserPassword where UserId={userId}" );
 
-                UserPasswordTable.HashIterationCount = 2000;
+                UserPasswordTable.HashIterationCount = 50000;
                 u.LoginUser( ctx, userId, pwd ).UserId.Should().Be( userId );
                 var hash2 = u.Database.ExecuteScalar<byte[]>( $"select PwdHash from CK.tUserPassword where UserId={userId}" );
 
