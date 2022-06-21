@@ -1,5 +1,5 @@
 using System;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 using CK.SqlServer;
 using CK.Core;
@@ -27,26 +27,25 @@ namespace CK.DB.User.UserPassword
         /// <summary>
         /// Current iteration count.
         /// Should be changed only at start and only if you know what you are doing.
-        /// It can not be less than 1000 and defaults to <see cref="DefaultHashIterationCount"/> = 10000.
+        /// It can not be less than 5000 and defaults to <see cref="DefaultHashIterationCount"/>.
         /// </summary>
         static public int HashIterationCount
         {
             get { return _iterationCount; }
             set
             {
-                if( value < 1000 ) throw new ArgumentException( "HashIterationCount must be at the very least 1000." );
+                if( value < 5000 ) throw new ArgumentException( "HashIterationCount must be at the very least 5000." );
                 _iterationCount = value;
             }
         }
 
         /// <summary>
-        /// The default <see cref="HashIterationCount"/> is 10000.
+        /// The default <see cref="HashIterationCount"/>.
         /// </summary>
-        public static readonly int DefaultHashIterationCount;
+        public const int DefaultHashIterationCount = 200_000;
 
         static UserPasswordTable()
         {
-            DefaultHashIterationCount = 10000;
             _iterationCount = DefaultHashIterationCount;
         }
 
@@ -105,12 +104,12 @@ namespace CK.DB.User.UserPassword
         /// <param name="actualLogin">Sets to false to avoid any login side-effect (such as updating the LastLoginTime) on success.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>The login result.</returns>
-        public Task<LoginResult> LoginUserAsync( ISqlCallContext ctx, int userId, string password, bool actualLogin = true, CancellationToken cancellationToken = default( CancellationToken ) )
+        public async Task<LoginResult> LoginUserAsync( ISqlCallContext ctx, int userId, string password, bool actualLogin = true, CancellationToken cancellationToken = default( CancellationToken ) )
         {
             using( var c = new SqlCommand( _commandReadByUserId ) )
             {
                 c.Parameters.AddWithValue( "@UserId", userId );
-                return DoVerifyAsync( ctx, c, password, userId, actualLogin, cancellationToken );
+                return await DoVerifyAsync( ctx, c, password, userId, actualLogin, cancellationToken ).ConfigureAwait( false );
             }
         }
 
@@ -125,11 +124,11 @@ namespace CK.DB.User.UserPassword
         /// <param name="actualLogin">Sets to false to avoid any login side-effect (such as updating the LastLoginTime) on success.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>The login result.</returns>
-        public Task<LoginResult> LoginUserAsync( ISqlCallContext ctx, string userName, string password, bool actualLogin = true, CancellationToken cancellationToken = default(CancellationToken) )
+        public async Task<LoginResult> LoginUserAsync( ISqlCallContext ctx, string userName, string password, bool actualLogin = true, CancellationToken cancellationToken = default(CancellationToken) )
         {
             using( var c = CreateReadByNameCommand( userName ) )
             {
-                return DoVerifyAsync( ctx, c, password, userName, actualLogin, cancellationToken );
+                return await DoVerifyAsync( ctx, c, password, userName, actualLogin, cancellationToken ).ConfigureAwait( false );
             }
         }
 
@@ -154,14 +153,13 @@ namespace CK.DB.User.UserPassword
             //     hash is null if the user is not a UserPassword: we'll try to migrate it.
             //     hash can be empty iif a previous attempt to migrate it has failed.
 
-            var read = await ctx[Database].ExecuteSingleRowAsync( hashReader,
-                            row => row == null
+            var read = await ctx[Database].ExecuteSingleRowAsync( hashReader, row => row == null
                                     ? (0, null, -1)
                                     : (UserId: row.GetInt32( 1 ),
                                        PwdHash:
                                             row.IsDBNull( 0 ) ? null : row.GetBytes( 0 ),
                                        FailedAttemptCount:
-                                            row.IsDBNull( 2 ) ? -1 : row.GetByte( 2 )) );
+                                            row.IsDBNull( 2 ) ? -1 : row.GetByte( 2 )), cancellationToken ).ConfigureAwait( false );
             if( read.UserId == 0 ) return new LoginResult( KnownLoginFailureCode.InvalidUserKey );
 
             PasswordVerificationResult result = PasswordVerificationResult.Failed;

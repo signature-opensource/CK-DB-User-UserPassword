@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
@@ -27,7 +27,7 @@ namespace CK.DB.User.UserPassword
         /// Creates a new instance of <see cref="PasswordHasher"/>.
         /// </summary>
         /// <param name="iterCount">Iteration count to use.</param>
-        public PasswordHasher(int iterCount)
+        public PasswordHasher( int iterCount )
         {
             _iterCount = iterCount;
             _rng = RandomNumberGenerator.Create();
@@ -38,43 +38,43 @@ namespace CK.DB.User.UserPassword
         /// </summary>
         /// <param name="password">The password to hash.</param>
         /// <returns>A hashed representation of the supplied <paramref name="password"/>.</returns>
-        public byte[] HashPassword(string password)
+        public byte[] HashPassword( string password )
         {
-            if (password == null)
+            if( password == null )
             {
-                throw new ArgumentNullException(nameof(password));
+                throw new ArgumentNullException( nameof( password ) );
             }
 
-            return HashPasswordV3(password, _rng);
+            return HashPasswordV3( password, _rng );
         }
 
-        byte[] HashPasswordV3(string password, RandomNumberGenerator rng)
+        byte[] HashPasswordV3( string password, RandomNumberGenerator rng )
         {
-            return HashPasswordV3(password, rng,
+            return HashPasswordV3( password, rng,
                 prf: KeyDerivationPrf.HMACSHA256,
                 iterCount: _iterCount,
                 saltSize: 128 / 8,
-                numBytesRequested: 256 / 8);
+                numBytesRequested: 256 / 8 );
         }
 
-        static byte[] HashPasswordV3(string password, RandomNumberGenerator rng, KeyDerivationPrf prf, int iterCount, int saltSize, int numBytesRequested)
+        static byte[] HashPasswordV3( string password, RandomNumberGenerator rng, KeyDerivationPrf prf, int iterCount, int saltSize, int numBytesRequested )
         {
             // Produce a version 3 (see comment above) text hash.
             byte[] salt = new byte[saltSize];
-            rng.GetBytes(salt);
-            byte[] subkey = KeyDerivation.Pbkdf2(password, salt, prf, iterCount, numBytesRequested);
+            rng.GetBytes( salt );
+            byte[] subkey = KeyDerivation.Pbkdf2( password, salt, prf, iterCount, numBytesRequested );
 
             var outputBytes = new byte[13 + salt.Length + subkey.Length];
             outputBytes[0] = 0x01; // format marker
-            WriteNetworkByteOrder(outputBytes, 1, (uint)prf);
-            WriteNetworkByteOrder(outputBytes, 5, (uint)iterCount);
-            WriteNetworkByteOrder(outputBytes, 9, (uint)saltSize);
-            Buffer.BlockCopy(salt, 0, outputBytes, 13, salt.Length);
-            Buffer.BlockCopy(subkey, 0, outputBytes, 13 + saltSize, subkey.Length);
+            WriteNetworkByteOrder( outputBytes, 1, (uint)prf );
+            WriteNetworkByteOrder( outputBytes, 5, (uint)iterCount );
+            WriteNetworkByteOrder( outputBytes, 9, (uint)saltSize );
+            Buffer.BlockCopy( salt, 0, outputBytes, 13, salt.Length );
+            Buffer.BlockCopy( subkey, 0, outputBytes, 13 + saltSize, subkey.Length );
             return outputBytes;
         }
 
-        static uint ReadNetworkByteOrder(byte[] buffer, int offset)
+        static uint ReadNetworkByteOrder( byte[] buffer, int offset )
         {
             return ((uint)(buffer[offset + 0]) << 24)
                 | ((uint)(buffer[offset + 1]) << 16)
@@ -89,27 +89,27 @@ namespace CK.DB.User.UserPassword
         /// <param name="providedPassword">The password supplied for comparison.</param>
         /// <returns>A <see cref="PasswordVerificationResult"/> indicating the result of a password hash comparison.</returns>
         /// <remarks>Implementations of this method should be time consistent.</remarks>
-        public PasswordVerificationResult VerifyHashedPassword(byte[] hashedPassword, string providedPassword)
+        public PasswordVerificationResult VerifyHashedPassword( byte[] hashedPassword, string providedPassword )
         {
-            if (hashedPassword == null)
+            if( hashedPassword == null )
             {
-                throw new ArgumentNullException(nameof(hashedPassword));
+                throw new ArgumentNullException( nameof( hashedPassword ) );
             }
-            if (providedPassword == null)
+            if( providedPassword == null )
             {
-                throw new ArgumentNullException(nameof(providedPassword));
+                throw new ArgumentNullException( nameof( providedPassword ) );
             }
 
             // read the format marker from the hashed password
-            if (hashedPassword.Length == 0)
+            if( hashedPassword.Length == 0 )
             {
                 return PasswordVerificationResult.Failed;
             }
-            switch (hashedPassword[0])
+            switch( hashedPassword[0] )
             {
                 case 0x01:
                     int embeddedIterCount;
-                    if (VerifyHashedPasswordV3(hashedPassword, providedPassword, out embeddedIterCount))
+                    if( VerifyHashedPasswordV3( hashedPassword, providedPassword, out embeddedIterCount ) )
                     {
                         // If this hasher was configured with a higher iteration count, change the entry now.
                         return (embeddedIterCount < _iterCount)
@@ -126,37 +126,37 @@ namespace CK.DB.User.UserPassword
             }
         }
 
-        static bool VerifyHashedPasswordV3(byte[] hashedPassword, string password, out int iterCount)
+        static bool VerifyHashedPasswordV3( byte[] hashedPassword, string password, out int iterCount )
         {
-            iterCount = default(int);
+            iterCount = default( int );
 
             try
             {
                 // Read header information
-                KeyDerivationPrf prf = (KeyDerivationPrf)ReadNetworkByteOrder(hashedPassword, 1);
-                iterCount = (int)ReadNetworkByteOrder(hashedPassword, 5);
-                int saltLength = (int)ReadNetworkByteOrder(hashedPassword, 9);
+                KeyDerivationPrf prf = (KeyDerivationPrf)ReadNetworkByteOrder( hashedPassword, 1 );
+                iterCount = (int)ReadNetworkByteOrder( hashedPassword, 5 );
+                int saltLength = (int)ReadNetworkByteOrder( hashedPassword, 9 );
 
                 // Read the salt: must be >= 128 bits
-                if (saltLength < 128 / 8)
+                if( saltLength < 128 / 8 )
                 {
                     return false;
                 }
                 byte[] salt = new byte[saltLength];
-                Buffer.BlockCopy(hashedPassword, 13, salt, 0, salt.Length);
+                Buffer.BlockCopy( hashedPassword, 13, salt, 0, salt.Length );
 
                 // Read the subkey (the rest of the payload): must be >= 128 bits
                 int subkeyLength = hashedPassword.Length - 13 - salt.Length;
-                if (subkeyLength < 128 / 8)
+                if( subkeyLength < 128 / 8 )
                 {
                     return false;
                 }
                 byte[] expectedSubkey = new byte[subkeyLength];
-                Buffer.BlockCopy(hashedPassword, 13 + salt.Length, expectedSubkey, 0, expectedSubkey.Length);
+                Buffer.BlockCopy( hashedPassword, 13 + salt.Length, expectedSubkey, 0, expectedSubkey.Length );
 
                 // Hash the incoming password and verify it
-                byte[] actualSubkey = KeyDerivation.Pbkdf2(password, salt, prf, iterCount, subkeyLength);
-                return ByteArraysEqual(actualSubkey, expectedSubkey);
+                byte[] actualSubkey = KeyDerivation.Pbkdf2( password, salt, prf, iterCount, subkeyLength );
+                return ByteArraysEqual( actualSubkey, expectedSubkey );
             }
             catch
             {
@@ -167,28 +167,28 @@ namespace CK.DB.User.UserPassword
             }
         }
 
-        static void WriteNetworkByteOrder(byte[] buffer, int offset, uint value)
+        static void WriteNetworkByteOrder( byte[] buffer, int offset, uint value )
         {
             buffer[offset + 0] = (byte)(value >> 24);
             buffer[offset + 1] = (byte)(value >> 16);
             buffer[offset + 2] = (byte)(value >> 8);
             buffer[offset + 3] = (byte)(value >> 0);
         }
-        
+
         // Compares two byte arrays for equality. The method is specifically written so that the loop is not optimized.
-        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        static bool ByteArraysEqual(byte[] a, byte[] b)
+        [MethodImpl( MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization )]
+        static bool ByteArraysEqual( byte[] a, byte[] b )
         {
-            if (a == null && b == null)
+            if( a == null && b == null )
             {
                 return true;
             }
-            if (a == null || b == null || a.Length != b.Length)
+            if( a == null || b == null || a.Length != b.Length )
             {
                 return false;
             }
             var areSame = true;
-            for (var i = 0; i < a.Length; i++)
+            for( var i = 0; i < a.Length; i++ )
             {
                 areSame &= (a[i] == b[i]);
             }
