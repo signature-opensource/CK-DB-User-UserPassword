@@ -67,7 +67,7 @@ namespace CK.DB.User.UserPassword.Tests
         }
 
         [Test]
-        public async Task standard_generic_tests_for_Basic_provider_Async_with_migrator()
+        public async Task standard_generic_tests_for_Basic_provider_Async_with_migrator_Async()
         {
             var auth = TestHelper.StObjMap.StObjs.Obtain<Auth.Package>();
             var p = TestHelper.StObjMap.StObjs.Obtain<Package>();
@@ -197,7 +197,7 @@ namespace CK.DB.User.UserPassword.Tests
         }
 
         [Test]
-        public async Task UserPassword_implements_IBasicAuthenticationProvider_async()
+        public async Task UserPassword_implements_IBasicAuthenticationProvider_Async()
         {
             var basic = TestHelper.StObjMap.StObjs.Obtain<IBasicAuthenticationProvider>();
             var user = TestHelper.StObjMap.StObjs.Obtain<UserTable>();
@@ -316,7 +316,7 @@ namespace CK.DB.User.UserPassword.Tests
         }
 
         [Test]
-        public async Task password_migration_is_supported_by_user_id_and_user_name_async()
+        public async Task password_migration_is_supported_by_user_id_and_user_name_Async()
         {
             var p = TestHelper.StObjMap.StObjs.Obtain<Package>();
             var u = TestHelper.StObjMap.StObjs.Obtain<UserPasswordTable>();
