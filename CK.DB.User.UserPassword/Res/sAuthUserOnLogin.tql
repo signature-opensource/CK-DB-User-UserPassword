@@ -3,15 +3,19 @@ create transformer on CK.sAuthUserOnLogin
 as
 begin
 	inject "
-    -- FailedAttemptCount increment is hendled here to centralize 
-    -- code in CK.sAuthUserOnLogin as much as possible.
-		if @Scheme = 'Basic'
-    begin
-      -- By default, any login failure triggers a FailedAttemptCount increment.
-      update CK.tUserPassword set FailedAttemptCount = FailedAttemptCount+1
-        where UserId = @UserId and FailedAttemptCount < 255;
-    end
-	" 
+            -- FailedAttemptCount increment is hendled here to centralize 
+            -- code in CK.sAuthUserOnLogin as much as possible.
+            if @Scheme = 'Basic' and
+                (@FailureCode = 4 /* KnownLoginFailureCode.InvalidCredentials */
+              or @FailureCode = 2 /* KnownLoginFailureCode.UnregisteredUser: called when migrating password and old password match failed. */ )
+            begin
+                declare @FailedAttemptCount tinyint;
+
+                update CK.tUserPassword set @FailedAttemptCount = FailedAttemptCount = FailedAttemptCount + 1
+                    where UserId = @UserId and FailedAttemptCount < 255;
+
+                --<OnBasicAttemptCountIncremented />
+            end
+" 
 	into "LoginFailed";
 end
-
