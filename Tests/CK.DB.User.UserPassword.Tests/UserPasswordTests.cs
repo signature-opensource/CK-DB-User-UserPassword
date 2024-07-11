@@ -1,16 +1,17 @@
-using System;
-using Microsoft.Data.SqlClient;
-using System.Threading.Tasks;
 using CK.Core;
 using CK.DB.Actor;
+using CK.DB.Auth;
 using CK.SqlServer;
+using CK.Testing;
+using FluentAssertions;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using CK.DB.Auth;
-using System.Collections.Generic;
-using FluentAssertions;
+using System.Threading.Tasks;
 using static CK.Testing.MonitorTestHelper;
+
 
 namespace CK.DB.User.UserPassword.Tests
 {
@@ -37,7 +38,7 @@ namespace CK.DB.User.UserPassword.Tests
             var user = SharedEngine.Map.StObjs.Obtain<UserTable>();
             var auth = SharedEngine.Map.StObjs.Obtain<Auth.Package>();
             var basic = auth.FindProvider( "Basic" );
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 var userName = Guid.NewGuid().ToString();
                 var userId = user.CreateUser( ctx, 1, userName );
@@ -90,7 +91,7 @@ namespace CK.DB.User.UserPassword.Tests
         {
             var u = SharedEngine.Map.StObjs.Obtain<UserPasswordTable>();
             var user = SharedEngine.Map.StObjs.Obtain<UserTable>();
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 var userName = Guid.NewGuid().ToString();
                 int userId = user.CreateUser( ctx, 1, userName );
@@ -112,7 +113,7 @@ namespace CK.DB.User.UserPassword.Tests
         public void create_a_password_for_an_anonymous_user_is_an_error()
         {
             var u = SharedEngine.Map.StObjs.Obtain<UserPasswordTable>();
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 u.Invoking( sut => sut.CreateOrUpdatePasswordUser( ctx, 1, 0, "x" ) ).Should().Throw<SqlDetailedException>();
                 u.Invoking( sut => sut.CreateOrUpdatePasswordUser( ctx, 0, 1, "toto" ) ).Should().Throw<SqlDetailedException>();
@@ -126,7 +127,7 @@ namespace CK.DB.User.UserPassword.Tests
         {
             var u = SharedEngine.Map.StObjs.Obtain<UserPasswordTable>();
             var user = SharedEngine.Map.StObjs.Obtain<UserTable>();
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 int userId = user.CreateUser( ctx, 1, Guid.NewGuid().ToString() );
                 u.CreateOrUpdatePasswordUser( ctx, 1, userId, "pwd" );
@@ -142,7 +143,7 @@ namespace CK.DB.User.UserPassword.Tests
         {
             var u = SharedEngine.Map.StObjs.Obtain<UserPasswordTable>();
             var user = SharedEngine.Map.StObjs.Obtain<UserTable>();
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 UserPasswordTable.HashIterationCount = 5000;
                 var userName = Guid.NewGuid().ToString();
@@ -171,7 +172,7 @@ namespace CK.DB.User.UserPassword.Tests
         {
             var basic = SharedEngine.Map.StObjs.Obtain<IBasicAuthenticationProvider>();
             var user = SharedEngine.Map.StObjs.Obtain<UserTable>();
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 string name = Guid.NewGuid().ToString();
                 int userId = user.CreateUser( ctx, 1, name );
@@ -201,7 +202,7 @@ namespace CK.DB.User.UserPassword.Tests
         {
             var basic = SharedEngine.Map.StObjs.Obtain<IBasicAuthenticationProvider>();
             var user = SharedEngine.Map.StObjs.Obtain<UserTable>();
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 string name = Guid.NewGuid().ToString();
                 int userId = await user.CreateUserAsync( ctx, 1, name );
@@ -254,7 +255,7 @@ namespace CK.DB.User.UserPassword.Tests
             var u = SharedEngine.Map.StObjs.Obtain<UserPasswordTable>();
             var user = SharedEngine.Map.StObjs.Obtain<UserTable>();
             using( Util.CreateDisposableAction( () => p.PasswordMigrator = null ) )
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 // By identifier
                 {
@@ -322,7 +323,7 @@ namespace CK.DB.User.UserPassword.Tests
             var u = SharedEngine.Map.StObjs.Obtain<UserPasswordTable>();
             var user = SharedEngine.Map.StObjs.Obtain<UserTable>();
             using( Util.CreateDisposableAction( () => p.PasswordMigrator = null ) )
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 // By identifier
                 {
@@ -388,7 +389,7 @@ namespace CK.DB.User.UserPassword.Tests
         {
             var u = SharedEngine.Map.StObjs.Obtain<UserPasswordTable>();
             var user = SharedEngine.Map.StObjs.Obtain<UserTable>();
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 // By name
                 {
@@ -420,7 +421,7 @@ namespace CK.DB.User.UserPassword.Tests
         {
             var u = SharedEngine.Map.StObjs.Obtain<UserPasswordTable>();
             var user = SharedEngine.Map.StObjs.Obtain<UserTable>();
-            using( var ctx = new SqlStandardCallContext() )
+            using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
             {
                 string userName = "Basic auth - " + Guid.NewGuid().ToString();
                 var idU = user.CreateUser( ctx, 1, userName );

@@ -6,7 +6,7 @@ namespace CK.DB.User.UserPassword
     /// Package that adds a user password support. 
     /// </summary>
     [SqlPackage( Schema = "CK", ResourcePath = "Res" )]
-    [Versions("1.0.0,1.0.1")]
+    [Versions( "1.0.0,1.0.1" )]
     [SqlObjectItem( "transform:vUserAuthProvider" )]
     public class Package : SqlPackage
     {
@@ -19,14 +19,14 @@ namespace CK.DB.User.UserPassword
         /// that will be used to migrate from previous password management 
         /// implementations.
         /// </summary>
-        public IUserPasswordMigrator PasswordMigrator { get; set; }
+        public IUserPasswordMigrator? PasswordMigrator { get; set; }
 
         /// <summary>
         /// Creates a new <see cref="IPasswordHasher"/> configured with the
         /// current <see cref="UserPasswordTable.HashIterationCount"/>.
         /// </summary>
         /// <returns>A password hasher.</returns>
-        public IPasswordHasher CreatePasswordHasher() => new PasswordHasher(UserPasswordTable.HashIterationCount);
+        public IPasswordHasher CreatePasswordHasher() => new PasswordHasher( UserPasswordTable.HashIterationCount );
 
     }
 }
