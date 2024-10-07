@@ -1,14 +1,13 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CK.DB.User.UserPassword.Tests.From
+namespace CK.DB.User.UserPassword.Tests.From;
+
+[TestFixture]
+public class FromAuthTests : CK.DB.Auth.Tests.AuthTests
 {
-    [TestFixture]
-    public class FromAuthTests : CK.DB.Auth.Tests.AuthTests
-    {
-    }
 }
