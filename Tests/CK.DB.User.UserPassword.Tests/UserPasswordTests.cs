@@ -3,7 +3,7 @@ using CK.DB.Actor;
 using CK.DB.Auth;
 using CK.SqlServer;
 using CK.Testing;
-using FluentAssertions;
+using Shouldly;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -42,15 +42,15 @@ public class UserPasswordTests
         {
             var userName = Guid.NewGuid().ToString();
             var userId = user.CreateUser( ctx, 1, userName );
-            basic.CreateOrUpdateUser( ctx, 1, userId, "pass" ).OperationResult.Should().Be( UCResult.Created );
+            basic.CreateOrUpdateUser( ctx, 1, userId, "pass" ).OperationResult.ShouldBe( UCResult.Created );
             var payload = new Dictionary<string, object>();
             payload["password"] = "pass";
 
             payload["userId"] = (double)userId;
-            basic.LoginUser( ctx, payload ).IsSuccess.Should().BeTrue();
+            basic.LoginUser( ctx, payload ).IsSuccess.ShouldBeTrue();
 
             payload["userId"] = userId.ToString();
-            basic.LoginUser( ctx, payload ).IsSuccess.Should().BeTrue();
+            basic.LoginUser( ctx, payload ).IsSuccess.ShouldBeTrue();
             user.DestroyUser( ctx, 1, userId );
         }
     }
@@ -98,13 +98,13 @@ public class UserPasswordTests
             var pwd = "pwddetestcrrr";
             var pwd2 = "pwddetestcrdfezfrefzzfrr";
 
-            u.CreateOrUpdatePasswordUser( ctx, 1, userId, pwd ).OperationResult.Should().Be( UCResult.Created );
-            u.LoginUser( ctx, userId, pwd ).UserId.Should().Be( userId );
-            u.LoginUser( ctx, userId, pwd2 ).UserId.Should().Be( 0 );
+            u.CreateOrUpdatePasswordUser( ctx, 1, userId, pwd ).OperationResult.ShouldBe( UCResult.Created );
+            u.LoginUser( ctx, userId, pwd ).UserId.ShouldBe( userId );
+            u.LoginUser( ctx, userId, pwd2 ).UserId.ShouldBe( 0 );
 
             u.SetPassword( ctx, 1, userId, pwd2 );
-            u.LoginUser( ctx, userId, pwd2 ).UserId.Should().Be( userId );
-            u.LoginUser( ctx, userId, pwd ).UserId.Should().Be( 0 );
+            u.LoginUser( ctx, userId, pwd2 ).UserId.ShouldBe( userId );
+            u.LoginUser( ctx, userId, pwd ).UserId.ShouldBe( 0 );
 
         }
     }
@@ -115,10 +115,10 @@ public class UserPasswordTests
         var u = SharedEngine.Map.StObjs.Obtain<UserPasswordTable>();
         using( var ctx = new SqlStandardCallContext( TestHelper.Monitor ) )
         {
-            u.Invoking( sut => sut.CreateOrUpdatePasswordUser( ctx, 1, 0, "x" ) ).Should().Throw<SqlDetailedException>();
-            u.Invoking( sut => sut.CreateOrUpdatePasswordUser( ctx, 0, 1, "toto" ) ).Should().Throw<SqlDetailedException>();
-            u.Invoking( sut => sut.CreateOrUpdatePasswordUser( ctx, 1, 0, "x", UCLMode.UpdateOnly ) ).Should().Throw<SqlDetailedException>();
-            u.Invoking( sut => sut.CreateOrUpdatePasswordUser( ctx, 0, 1, "toto", UCLMode.UpdateOnly ) ).Should().Throw<SqlDetailedException>();
+            Util.Invokable( () => u.CreateOrUpdatePasswordUser( ctx, 1, 0, "x" ) ).ShouldThrow<SqlDetailedException>();
+            Util.Invokable( () => u.CreateOrUpdatePasswordUser( ctx, 0, 1, "toto" ) ).ShouldThrow<SqlDetailedException>();
+            Util.Invokable( () => u.CreateOrUpdatePasswordUser( ctx, 1, 0, "x", UCLMode.UpdateOnly ) ).ShouldThrow<SqlDetailedException>();
+            Util.Invokable( () => u.CreateOrUpdatePasswordUser( ctx, 0, 1, "toto", UCLMode.UpdateOnly ) ).ShouldThrow<SqlDetailedException>();
         }
     }
 
@@ -133,7 +133,7 @@ public class UserPasswordTests
             u.CreateOrUpdatePasswordUser( ctx, 1, userId, "pwd" );
             user.DestroyUser( ctx, 1, userId );
             u.Database.ExecuteReader( "select * from CK.tUserPassword where UserId = @0", userId )
-                .Rows.Should().BeEmpty();
+                .Rows.ShouldBeEmpty();
         }
     }
 
@@ -152,17 +152,17 @@ public class UserPasswordTests
             var hash1 = u.Database.ExecuteScalar<byte[]>( $"select PwdHash from CK.tUserPassword where UserId={userId}" );
 
             UserPasswordTable.HashIterationCount = 50000;
-            u.LoginUser( ctx, userId, pwd ).UserId.Should().Be( userId );
+            u.LoginUser( ctx, userId, pwd ).UserId.ShouldBe( userId );
             var hash2 = u.Database.ExecuteScalar<byte[]>( $"select PwdHash from CK.tUserPassword where UserId={userId}" );
 
-            hash1.SequenceEqual( hash2 ).Should().BeFalse( "Hash has been updated." );
+            hash1.SequenceEqual( hash2 ).ShouldBeFalse( "Hash has been updated." );
 
             UserPasswordTable.HashIterationCount = UserPasswordTable.DefaultHashIterationCount;
-            u.LoginUser( ctx, userId, pwd ).UserId.Should().Be( userId );
+            u.LoginUser( ctx, userId, pwd ).UserId.ShouldBe( userId );
             var hash3 = u.Database.ExecuteScalar<byte[]>( $"select PwdHash from CK.tUserPassword where UserId={userId}" );
 
-            hash1.SequenceEqual( hash3 ).Should().BeFalse( "Hash has been updated." );
-            hash2.SequenceEqual( hash3 ).Should().BeFalse( "Hash has been updated." );
+            hash1.SequenceEqual( hash3 ).ShouldBeFalse( "Hash has been updated." );
+            hash2.SequenceEqual( hash3 ).ShouldBeFalse( "Hash has been updated." );
 
         }
     }
@@ -178,21 +178,21 @@ public class UserPasswordTests
             int userId = user.CreateUser( ctx, 1, name );
             string pwd = "lklkl";
             var result = basic.CreateOrUpdatePasswordUser( ctx, 1, userId, pwd, UCLMode.CreateOnly );
-            result.OperationResult.Should().Be( UCResult.Created );
+            result.OperationResult.ShouldBe( UCResult.Created );
             result = basic.CreateOrUpdatePasswordUser( ctx, 1, userId, pwd + "no", UCLMode.CreateOnly );
-            result.OperationResult.Should().Be( UCResult.None );
-            basic.LoginUser( ctx, userId, pwd ).UserId.Should().Be( userId );
-            basic.LoginUser( ctx, userId, pwd + "no" ).UserId.Should().Be( 0 );
-            basic.LoginUser( ctx, name, pwd ).UserId.Should().Be( userId );
-            basic.LoginUser( ctx, name, pwd + "no" ).UserId.Should().Be( 0 );
+            result.OperationResult.ShouldBe( UCResult.None );
+            basic.LoginUser( ctx, userId, pwd ).UserId.ShouldBe( userId );
+            basic.LoginUser( ctx, userId, pwd + "no" ).UserId.ShouldBe( 0 );
+            basic.LoginUser( ctx, name, pwd ).UserId.ShouldBe( userId );
+            basic.LoginUser( ctx, name, pwd + "no" ).UserId.ShouldBe( 0 );
             basic.SetPassword( ctx, 1, userId, (pwd = pwd + "BIS") );
-            basic.LoginUser( ctx, userId, pwd ).UserId.Should().Be( userId );
-            basic.LoginUser( ctx, userId, pwd + "no" ).UserId.Should().Be( 0 );
-            basic.LoginUser( ctx, name, pwd ).UserId.Should().Be( userId );
-            basic.LoginUser( ctx, name, pwd + "no" ).UserId.Should().Be( 0 );
+            basic.LoginUser( ctx, userId, pwd ).UserId.ShouldBe( userId );
+            basic.LoginUser( ctx, userId, pwd + "no" ).UserId.ShouldBe( 0 );
+            basic.LoginUser( ctx, name, pwd ).UserId.ShouldBe( userId );
+            basic.LoginUser( ctx, name, pwd + "no" ).UserId.ShouldBe( 0 );
             basic.DestroyPasswordUser( ctx, 1, userId );
             user.Database.ExecuteReader( "select * from CK.tUserPassword where UserId = @0", userId )
-                .Rows.Should().BeEmpty();
+                .Rows.ShouldBeEmpty();
             user.DestroyUser( ctx, 1, userId );
         }
     }
@@ -208,21 +208,21 @@ public class UserPasswordTests
             int userId = await user.CreateUserAsync( ctx, 1, name );
             string pwd = "lklkl";
             var result = await basic.CreateOrUpdatePasswordUserAsync( ctx, 1, userId, pwd, UCLMode.CreateOnly );
-            result.OperationResult.Should().Be( UCResult.Created );
+            result.OperationResult.ShouldBe( UCResult.Created );
             result = await basic.CreateOrUpdatePasswordUserAsync( ctx, 1, userId, pwd + "no", UCLMode.CreateOnly );
-            result.OperationResult.Should().Be( UCResult.None );
-            (await basic.LoginUserAsync( ctx, userId, pwd )).UserId.Should().Be( userId );
-            (await basic.LoginUserAsync( ctx, userId, pwd + "no" )).UserId.Should().Be( 0 );
-            (await basic.LoginUserAsync( ctx, name, pwd )).UserId.Should().Be( userId );
-            (await basic.LoginUserAsync( ctx, name, pwd + "no" )).UserId.Should().Be( 0 );
+            result.OperationResult.ShouldBe( UCResult.None );
+            (await basic.LoginUserAsync( ctx, userId, pwd )).UserId.ShouldBe( userId );
+            (await basic.LoginUserAsync( ctx, userId, pwd + "no" )).UserId.ShouldBe( 0 );
+            (await basic.LoginUserAsync( ctx, name, pwd )).UserId.ShouldBe( userId );
+            (await basic.LoginUserAsync( ctx, name, pwd + "no" )).UserId.ShouldBe( 0 );
             await basic.SetPasswordAsync( ctx, 1, userId, (pwd = pwd + "BIS") );
-            (await basic.LoginUserAsync( ctx, userId, pwd )).UserId.Should().Be( userId );
-            (await basic.LoginUserAsync( ctx, userId, pwd + "no" )).UserId.Should().Be( 0 );
-            (await basic.LoginUserAsync( ctx, name, pwd )).UserId.Should().Be( userId );
-            (await basic.LoginUserAsync( ctx, name, pwd + "no" )).UserId.Should().Be( 0 );
+            (await basic.LoginUserAsync( ctx, userId, pwd )).UserId.ShouldBe( userId );
+            (await basic.LoginUserAsync( ctx, userId, pwd + "no" )).UserId.ShouldBe( 0 );
+            (await basic.LoginUserAsync( ctx, name, pwd )).UserId.ShouldBe( userId );
+            (await basic.LoginUserAsync( ctx, name, pwd + "no" )).UserId.ShouldBe( 0 );
             await basic.DestroyPasswordUserAsync( ctx, 1, userId );
             user.Database.ExecuteReader( "select * from CK.tUserPassword where UserId = @0", userId )
-                .Rows.Should().BeEmpty();
+                .Rows.ShouldBeEmpty();
             await user.DestroyUserAsync( ctx, 1, userId );
         }
     }
@@ -263,28 +263,28 @@ public class UserPasswordTests
                 var idU = user.CreateUser( ctx, 1, userName );
                 p.PasswordMigrator = new MigrationSupport( idU, "toto" );
 
-                u.LoginUser( ctx, idU, "failed" ).UserId.Should().Be( 0 );
+                u.LoginUser( ctx, idU, "failed" ).UserId.ShouldBe( 0 );
                 p.Database.ExecuteScalar( $"select PwdHash from CK.tUserPassword where UserId={idU}" )
-                    .Should().BeEquivalentTo( Array.Empty<byte>(), "The row in the table has been created but with an empty hash." );
+                    .ShouldBe( Array.Empty<byte>(), "The row in the table has been created but with an empty hash." );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU}" )
-                    .Should().Be( 1, "Migration is potentially protected by FailedAttemptCount." );
+                    .ShouldBe( 1, "Migration is potentially protected by FailedAttemptCount." );
 
-                u.LoginUser( ctx, idU, "failed n°2" ).UserId.Should().Be( 0 );
+                u.LoginUser( ctx, idU, "failed n°2" ).UserId.ShouldBe( 0 );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU} and PwdHash=0x" )
-                    .Should().Be( 2, "Migration is potentially protected by FailedAttemptCount." );
+                    .ShouldBe( 2, "Migration is potentially protected by FailedAttemptCount." );
 
                 u.Database.ExecuteReader( $"select * from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                    .Rows.Should().BeEmpty( "A failed migration deos not appear in the view." );
+                    .Rows.ShouldBeEmpty( "A failed migration deos not appear in the view." );
 
 
-                u.LoginUser( ctx, idU, "toto" ).UserId.Should().Be( idU );
+                u.LoginUser( ctx, idU, "toto" ).UserId.ShouldBe( idU );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU}" )
-                    .Should().Be( 0, "FailedAttemptCount is zeroed on successful login." );
+                    .ShouldBe( 0, "FailedAttemptCount is zeroed on successful login." );
 
                 u.Database.ExecuteReader( $"select * from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                    .Rows.Should().HaveCount( 1, "The view now contains the successfully migrated user." );
+                    .Rows.Count.ShouldBe( 1, "The view now contains the successfully migrated user." );
 
-                u.LoginUser( ctx, idU, "toto" ).UserId.Should().Be( idU );
+                u.LoginUser( ctx, idU, "toto" ).UserId.ShouldBe( idU );
             }
             // By user name
             {
@@ -292,25 +292,25 @@ public class UserPasswordTests
                 var idU = user.CreateUser( ctx, 1, userName );
                 p.PasswordMigrator = new MigrationSupport( idU, "toto" );
 
-                u.LoginUser( ctx, userName, "failed" ).UserId.Should().Be( 0 );
+                u.LoginUser( ctx, userName, "failed" ).UserId.ShouldBe( 0 );
                 p.Database.ExecuteScalar( $"select PwdHash from CK.tUserPassword where UserId={idU}" )
-                    .Should().BeEquivalentTo( Array.Empty<byte>(), "The row in the table has been created but with an empty hash." );
+                    .ShouldBe( Array.Empty<byte>(), "The row in the table has been created but with an empty hash." );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU}" )
-                    .Should().Be( 1, "Migration is potentially protected by FailedAttemptCount." );
+                    .ShouldBe( 1, "Migration is potentially protected by FailedAttemptCount." );
 
-                u.LoginUser( ctx, userName, "failed n°2" ).UserId.Should().Be( 0 );
+                u.LoginUser( ctx, userName, "failed n°2" ).UserId.ShouldBe( 0 );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU} and PwdHash=0x" )
-                    .Should().Be( 2, "Migration is potentially protected by FailedAttemptCount." );
+                    .ShouldBe( 2, "Migration is potentially protected by FailedAttemptCount." );
 
                 u.Database.ExecuteReader( $"select * from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                    .Rows.Should().BeEmpty( "A failed migration deos not appear in the view." );
+                    .Rows.ShouldBeEmpty( "A failed migration deos not appear in the view." );
 
-                u.LoginUser( ctx, userName, "toto" ).UserId.Should().Be( idU );
+                u.LoginUser( ctx, userName, "toto" ).UserId.ShouldBe( idU );
                 u.Database.ExecuteReader( $"select * from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                    .Rows.Should().HaveCount( 1, "The view now contains the successfully migrated user." );
+                    .Rows.Count.ShouldBe( 1, "The view now contains the successfully migrated user." );
 
 
-                u.LoginUser( ctx, userName, "toto" ).UserId.Should().Be( idU );
+                u.LoginUser( ctx, userName, "toto" ).UserId.ShouldBe( idU );
 
             }
         }
@@ -331,27 +331,27 @@ public class UserPasswordTests
                 var idU = await user.CreateUserAsync( ctx, 1, userName );
                 p.PasswordMigrator = new MigrationSupport( idU, "toto" );
 
-                (await u.LoginUserAsync( ctx, idU, "failed" )).UserId.Should().Be( 0 );
+                (await u.LoginUserAsync( ctx, idU, "failed" )).UserId.ShouldBe( 0 );
                 p.Database.ExecuteScalar( $"select PwdHash from CK.tUserPassword where UserId={idU}" )
-                    .Should().BeEquivalentTo( Array.Empty<byte>(), "The row in the table has been created but with an empty hash." );
+                    .ShouldBe( Array.Empty<byte>(), "The row in the table has been created but with an empty hash." );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU}" )
-                    .Should().Be( 1, "Migration is potentially protected by FailedAttemptCount." );
+                    .ShouldBe( 1, "Migration is potentially protected by FailedAttemptCount." );
 
-                (await u.LoginUserAsync( ctx, idU, "failed n°2" )).UserId.Should().Be( 0 );
+                (await u.LoginUserAsync( ctx, idU, "failed n°2" )).UserId.ShouldBe( 0 );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU} and PwdHash=0x" )
-                    .Should().Be( 2, "Migration is potentially protected by FailedAttemptCount." );
+                    .ShouldBe( 2, "Migration is potentially protected by FailedAttemptCount." );
 
                 u.Database.ExecuteReader( $"select * from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                    .Rows.Should().BeEmpty( "A failed migration deos not appear in the view." );
+                    .Rows.ShouldBeEmpty( "A failed migration deos not appear in the view." );
 
-                (await u.LoginUserAsync( ctx, idU, "toto" )).UserId.Should().Be( idU );
+                (await u.LoginUserAsync( ctx, idU, "toto" )).UserId.ShouldBe( idU );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU}" )
-                    .Should().Be( 0, "FailedAttemptCount is zeroed on successful login." );
+                    .ShouldBe( 0, "FailedAttemptCount is zeroed on successful login." );
 
                 u.Database.ExecuteReader( $"select * from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                    .Rows.Should().HaveCount( 1, "The view now contains the successfully migrated user." );
+                    .Rows.Count.ShouldBe( 1, "The view now contains the successfully migrated user." );
 
-                (await u.LoginUserAsync( ctx, idU, "toto" )).UserId.Should().Be( idU );
+                (await u.LoginUserAsync( ctx, idU, "toto" )).UserId.ShouldBe( idU );
             }
             // By user name
             {
@@ -359,27 +359,27 @@ public class UserPasswordTests
                 var idU = await user.CreateUserAsync( ctx, 1, userName );
                 p.PasswordMigrator = new MigrationSupport( idU, "toto" );
 
-                (await u.LoginUserAsync( ctx, userName, "failed" )).UserId.Should().Be( 0 );
+                (await u.LoginUserAsync( ctx, userName, "failed" )).UserId.ShouldBe( 0 );
                 p.Database.ExecuteScalar( $"select PwdHash from CK.tUserPassword where UserId={idU}" )
-                    .Should().BeEquivalentTo( Array.Empty<byte>(), "The row in the table has been created but with an empty hash." );
+                    .ShouldBe( Array.Empty<byte>(), "The row in the table has been created but with an empty hash." );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU}" )
-                    .Should().Be( 1, "Migration is potentially protected by FailedAttemptCount." );
+                    .ShouldBe( 1, "Migration is potentially protected by FailedAttemptCount." );
 
-                (await u.LoginUserAsync( ctx, userName, "failed n°2" )).UserId.Should().Be( 0 );
+                (await u.LoginUserAsync( ctx, userName, "failed n°2" )).UserId.ShouldBe( 0 );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU} and PwdHash=0x" )
-                    .Should().Be( 2, "Migration is potentially protected by FailedAttemptCount." );
+                    .ShouldBe( 2, "Migration is potentially protected by FailedAttemptCount." );
 
                 u.Database.ExecuteReader( $"select * from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                    .Rows.Should().BeEmpty( "A failed migration deos not appear in the view." );
+                    .Rows.ShouldBeEmpty( "A failed migration deos not appear in the view." );
 
-                (await u.LoginUserAsync( ctx, userName, "toto" )).UserId.Should().Be( idU );
+                (await u.LoginUserAsync( ctx, userName, "toto" )).UserId.ShouldBe( idU );
                 p.Database.ExecuteScalar( $"select FailedAttemptCount from CK.tUserPassword where UserId={idU}" )
-                    .Should().Be( 0, "FailedAttemptCount is zeroed on successful login." );
+                    .ShouldBe( 0, "FailedAttemptCount is zeroed on successful login." );
 
                 u.Database.ExecuteReader( $"select * from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                    .Rows.Should().HaveCount( 1, "The view now contains the successfully migrated user." );
+                    .Rows.Count.ShouldBe( 1, "The view now contains the successfully migrated user." );
 
-                (await u.LoginUserAsync( ctx, userName, "toto" )).UserId.Should().Be( idU );
+                (await u.LoginUserAsync( ctx, userName, "toto" )).UserId.ShouldBe( idU );
             }
         }
     }
@@ -398,14 +398,14 @@ public class UserPasswordTests
                 var baseTime = u.Database.ExecuteScalar<DateTime>( "select sysutcdatetime();" );
                 u.CreateOrUpdatePasswordUser( ctx, 1, idU, "password", UCLMode.CreateOrUpdate | UCLMode.WithActualLogin );
                 var firstTime = u.Database.ExecuteScalar<DateTime>( $"select LastLoginTime from CK.tUserPassword where UserId={idU}" );
-                firstTime.Should().BeCloseTo( baseTime, TimeSpan.FromSeconds( 1 ) );
+                firstTime.ShouldBe( baseTime, tolerance: TimeSpan.FromSeconds( 1 ) );
                 Thread.Sleep( 100 );
-                u.LoginUser( ctx, userName, "failed login", actualLogin: true ).UserId.Should().Be( 0 );
+                u.LoginUser( ctx, userName, "failed login", actualLogin: true ).UserId.ShouldBe( 0 );
                 var firstTimeNo = u.Database.ExecuteScalar<DateTime>( $"select LastLoginTime from CK.tUserPassword where UserId={idU}" );
-                firstTimeNo.Should().Be( firstTime );
-                u.LoginUser( ctx, userName, "password", actualLogin: true ).UserId.Should().Be( idU );
+                firstTimeNo.ShouldBe( firstTime );
+                u.LoginUser( ctx, userName, "password", actualLogin: true ).UserId.ShouldBe( idU );
                 var firstTimeYes = u.Database.ExecuteScalar<DateTime>( $"select LastLoginTime from CK.tUserPassword where UserId={idU}" );
-                firstTimeYes.Should().BeAfter( firstTimeNo );
+                firstTimeYes.ShouldBeGreaterThan( firstTimeNo );
             }
         }
     }
@@ -426,13 +426,13 @@ public class UserPasswordTests
             string userName = "Basic auth - " + Guid.NewGuid().ToString();
             var idU = user.CreateUser( ctx, 1, userName );
             u.Database.ExecuteReader( $"select * from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                .Rows.Should().BeEmpty();
+                .Rows.ShouldBeEmpty();
             u.CreateOrUpdatePasswordUser( ctx, 1, idU, "password" );
             u.Database.ExecuteScalar( $"select count(*) from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                .Should().Be( 1 );
+                .ShouldBe( 1 );
             u.DestroyPasswordUser( ctx, 1, idU );
             u.Database.ExecuteReader( $"select * from CK.vUserAuthProvider where UserId={idU} and Scheme='Basic'" )
-                .Rows.Should().BeEmpty();
+                .Rows.ShouldBeEmpty();
             // To let the use in the database with a basic authentication.
             u.CreateOrUpdatePasswordUser( ctx, 1, idU, "password" );
         }
