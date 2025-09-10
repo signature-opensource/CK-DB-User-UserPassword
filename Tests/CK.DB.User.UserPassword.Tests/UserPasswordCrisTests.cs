@@ -7,6 +7,7 @@ using CK.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Shouldly;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using static CK.Testing.MonitorTestHelper;
@@ -17,9 +18,10 @@ namespace CK.DB.User.UserPassword.Tests;
 public class UserPasswordCrisTests
 {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-    AutomaticServices _automaticServices;
     AsyncServiceScope _scope;
+    IServiceProvider _services;
     CrisExecutionContext _executor;
+    RawCrisReceiver _crisReceiver;
     PocoDirectory _pocoDir;
     Package _package;
     UserPasswordTable _table;
@@ -29,19 +31,20 @@ public class UserPasswordCrisTests
     public void OneTimeSetUp()
     {
         _scope = SharedEngine.AutomaticServices.CreateAsyncScope();
-        var services = _scope.ServiceProvider;
+        _services = _scope.ServiceProvider;
 
-        _pocoDir = services.GetRequiredService<PocoDirectory>();
-        _executor = services.GetRequiredService<CrisExecutionContext>();
-        _package = services.GetRequiredService<Package>();
-        _table = services.GetRequiredService<UserPasswordTable>();
+        _pocoDir = _services.GetRequiredService<PocoDirectory>();
+        _executor = _services.GetRequiredService<CrisExecutionContext>();
+        _crisReceiver = _services.GetRequiredService<RawCrisReceiver>();
+        
+        _package = _services.GetRequiredService<Package>();
+        _table = _services.GetRequiredService<UserPasswordTable>();
     }
 
     [OneTimeTearDown]
     public async Task OneTimeTearDownAsync()
     {
         await _scope.DisposeAsync();
-        await _automaticServices.DisposeAsync();
     }
 
     [Test]
@@ -96,56 +99,47 @@ public class UserPasswordCrisTests
         }
     }
 
-    // Note: the following methods test IncomingValidators that currently cannot be tested with the CrisExecutionContext.
-    //[Test]
-    //public async Task cannot_use_empty_password_Async()
-    //{
-    //    var userId = 1;
-    //    var setCmd = _pocoDir.Create<ISetPasswordCommand>( cmd =>
-    //    {
-    //        cmd.ActorId = 1;
-    //        cmd.UserId = userId;
-    //        cmd.Password = string.Empty;
-    //    } );
-    //    var executingSetCmd = _backgroundExecutor.Submit( TestHelper.Monitor, setCmd )
-    //                                          .WithResult<ICrisBasicCommandResult>();
+    // The following methods test IncomingValidators.
+    // They cannot be tested with the CrisExecutionContext.
+    // This one use the RawCrisReceiver. The CK.DB.User.UserPassword SUT project has no
+    // dependency on CK.Cris.Executor (where RawCrisReceiver is).
+    [Test]
+    public async Task cannot_use_empty_password_Async()
+    {
+        var userId = 1;
+        var setCmd = _pocoDir.Create<ISetPasswordCommand>( cmd =>
+        {
+            cmd.ActorId = 1;
+            cmd.UserId = userId;
+            cmd.Password = string.Empty;
+        } );
+        var validationResult = await _crisReceiver.IncomingValidateAsync( TestHelper.Monitor, _services, setCmd );
+        validationResult.Success.ShouldBeFalse( "Setting an empty password should fail." );
+        validationResult.ValidationMessages.Any( vm => vm.Level == UserMessageLevel.Error ).ShouldBeTrue( "There must be at least one Error message." );
 
-    //    var res = await executingSetCmd.ExecutedCommand;
-    //    res.ShouldNotBeNull();
-    //    res.Result.ShouldBeAssignableTo<ICrisResultError>().ShouldNotBeNull().IsValidationError.ShouldBeTrue();
-    //    res.ValidationMessages.Any( vm => vm.Level == UserMessageLevel.Error ).ShouldBeTrue( "Setting an empty password should fail." );
+        var createCmd = _pocoDir.Create<ICreateOrUpdatePasswordCommand>( cmd =>
+        {
+            cmd.ActorId = 1;
+            cmd.UserId = userId;
+            cmd.Password = string.Empty;
+        } );
+        validationResult = await _crisReceiver.IncomingValidateAsync( TestHelper.Monitor, _services, createCmd );
+        validationResult.Success.ShouldBeFalse( "Creating with an empty password should fail." );
+        validationResult.ValidationMessages.Any( vm => vm.Level == UserMessageLevel.Error ).ShouldBeTrue( "There must be at least one Error message." );
+    }
 
-    //    var cmd = _pocoDir.Create<ICreateOrUpdatePasswordCommand>( cmd =>
-    //    {
-    //        cmd.ActorId = 1;
-    //        cmd.UserId = userId;
-    //        cmd.Password = string.Empty;
-    //    } );
-    //    var executingCmd = _backgroundExecutor.Submit( TestHelper.Monitor, cmd )
-    //                                          .WithResult<ICrisBasicCommandResult>();
-
-    //    res = await executingCmd.ExecutedCommand;
-    //    res.ShouldNotBeNull();
-    //    res.Result.ShouldBeAssignableTo<ICrisResultError>().ShouldNotBeNull().IsValidationError.ShouldBeTrue();
-    //    res.ValidationMessages.Any( vm => vm.Level == UserMessageLevel.Error ).ShouldBeTrue( "Setting an empty password should fail." );
-    //}
-
-    //[Test]
-    //public async Task only_user_can_set_its_own_password_Async()
-    //{
-    //    var userId = 3712;
-    //    var cmd = _pocoDir.Create<ISetPasswordCommand>( cmd =>
-    //    {
-    //        cmd.ActorId = 1;
-    //        cmd.UserId = userId;
-    //        cmd.Password = "pwd";
-    //    } );
-    //    var executingCmd = _backgroundExecutor.Submit( TestHelper.Monitor, cmd )
-    //                                          .WithResult<ICrisBasicCommandResult>();
-
-    //    var res = await executingCmd.ExecutedCommand;
-    //    res.ShouldNotBeNull();
-    //    res.Result.ShouldBeAssignableTo<ICrisResultError>().ShouldNotBeNull().IsValidationError.ShouldBeTrue();
-    //    res.ValidationMessages.Any( vm => vm.Level == UserMessageLevel.Error ).ShouldBeTrue( "Setting a password for another user should fail." );
-    //}
+    [Test]
+    public async Task only_user_can_set_its_own_password_Async()
+    {
+        var userId = 3712;
+        var cmd = _pocoDir.Create<ISetPasswordCommand>( cmd =>
+        {
+            cmd.ActorId = 1;
+            cmd.UserId = userId;
+            cmd.Password = "even if it is a strong pwd $µ*5464+=/-3'é-(('";
+        } );
+        var validationResult = await _crisReceiver.IncomingValidateAsync( TestHelper.Monitor, _services, cmd );
+        validationResult.Success.ShouldBeFalse( "Setting a password for another user should fail." );
+        validationResult.ValidationMessages.Any( vm => vm.Level == UserMessageLevel.Error ).ShouldBeTrue( "There must be at least one Error message." );
+    }
 }
