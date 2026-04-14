@@ -57,7 +57,7 @@ public class UserPasswordCrisTests
             cmd.ActorId = 1;
             cmd.UserId = userId;
             cmd.Password = pwd;
-            cmd.UCLMode = UCLMode.CreateOrUpdate;
+            cmd.CreationMode = CreationMode.CreateOrUpdate;
         } );
         var executingCmd = await _executor.ExecuteRootCommandAsync( cmd );
         var res = executingCmd.WithResult<ICrisBasicCommandResult>().Result;

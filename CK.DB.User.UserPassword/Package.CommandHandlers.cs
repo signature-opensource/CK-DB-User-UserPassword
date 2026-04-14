@@ -46,18 +46,19 @@ public partial class Package
             var res = cmd.CreateResult();
             try
             {
-                var uclResult = await table.CreateOrUpdatePasswordUserAsync( ctx, cmd.ActorId.GetValueOrDefault(), cmd.UserId, cmd.Password, cmd.UCLMode );
-                if( cmd.UCLMode == UCLMode.CreateOnly && uclResult.OperationResult != UCResult.Created )
+                var uclMode = ResolveUCLMode( cmd );
+                var uclResult = await table.CreateOrUpdatePasswordUserAsync( ctx, cmd.ActorId.GetValueOrDefault(), cmd.UserId, cmd.Password, uclMode );
+                if( uclMode == UCLMode.CreateOnly && uclResult.OperationResult != UCResult.Created )
                 {
                     ctx.Monitor.Error( $"User's password has not been created. (ActorId: {cmd.ActorId}, UserId: {cmd.UserId})" );
                     collector.Error( $"User's password has not been created. (ActorId: {cmd.ActorId}, UserId: {cmd.UserId})", "User.PasswordCreationFailed" );
                 }
-                if( cmd.UCLMode == UCLMode.UpdateOnly && uclResult.OperationResult != UCResult.Updated )
+                if( uclMode == UCLMode.UpdateOnly && uclResult.OperationResult != UCResult.Updated )
                 {
                     ctx.Monitor.Error( $"User's password has not been updated. (ActorId: {cmd.ActorId}, UserId: {cmd.UserId})" );
                     collector.Error( $"User's password has not been updated. (ActorId: {cmd.ActorId}, UserId: {cmd.UserId})", "User.PasswordUpdateFailed" );
                 }
-                if( cmd.UCLMode == UCLMode.CreateOrUpdate && uclResult.OperationResult != UCResult.Updated && uclResult.OperationResult != UCResult.Created )
+                if( uclMode == UCLMode.CreateOrUpdate && uclResult.OperationResult != UCResult.Updated && uclResult.OperationResult != UCResult.Created )
                 {
                     ctx.Monitor.Error( $"User's password has not been created nor updated. (ActorId: {cmd.ActorId}, UserId: {cmd.UserId})" );
                     collector.Error( $"User's password has not been created nor updated. (ActorId: {cmd.ActorId}, UserId: {cmd.UserId})", "User.PasswordCreateOrUpdateFailed" );
@@ -81,5 +82,21 @@ public partial class Package
             res.SetUserMessages( collector );
             return res;
         }
+    }
+
+    UCLMode ResolveUCLMode( ICreateOrUpdatePasswordCommand cmd )
+    {
+        UCLMode mode = cmd.CreationMode switch
+        {
+            CreationMode.CreateOnly => UCLMode.CreateOnly,
+            CreationMode.UpdateOnly => UCLMode.UpdateOnly,
+            CreationMode.CreateOrUpdate => UCLMode.CreateOrUpdate,
+            _ => throw new ArgumentOutOfRangeException( nameof( cmd.CreationMode ) )
+        };
+
+        if( cmd.WithCheckLogin ) mode |= UCLMode.WithCheckLogin;
+        if( cmd.WithActualLogin ) mode |= UCLMode.WithActualLogin;
+
+        return mode;
     }
 }
