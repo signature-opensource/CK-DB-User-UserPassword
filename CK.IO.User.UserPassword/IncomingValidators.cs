@@ -1,5 +1,6 @@
 using CK.Core;
 using CK.Cris;
+using System;
 
 namespace CK.IO.User.UserPassword;
 
@@ -35,6 +36,11 @@ public class IncomingValidators : IRealObject
         if( string.IsNullOrWhiteSpace( command.Password ) )
         {
             collector.Error( "Invalid password.", "User.InvalidPassword" );
+        }
+
+        if( !Enum.IsDefined( command.CreationMode ) )
+        {
+            collector.Error( "Invalid CreationMode.", "User.InvalidCreationMode" );
         }
     }
 }
