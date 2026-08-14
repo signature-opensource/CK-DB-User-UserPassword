@@ -1,0 +1,19 @@
+-- SetupConfig: {}
+--
+-- The output parameter name must exactly match the CK.IO.User.UserPassword.Reset.IUserProfile
+-- property name so that the Poco is filled.
+--
+-- The join must be a left outer one: a user may have no CK.tUserPassword row at all (external
+-- authentication only, or user created without any password), hence the isnull.
+--
+create transformer on CK.sUserUserProfileRead
+as
+begin
+	add parameter @IsTemporaryPassword bit output;
+
+	inject "
+	left outer join CK.tUserPassword p on p.UserId = u.UserId
+	" after single {from CK.tUser u};
+
+	add column @IsTemporaryPassword = isnull( p.IsTemporary, 0 );
+end
