@@ -23,6 +23,7 @@ public class UserPasswordResetTests
     PocoDirectory _pocoDir;
     Actor.UserTable _userTable;
     UserPasswordResetTable _table;
+    UserPasswordTable _pwdTable;
 #pragma warning restore CS8618
 
     [OneTimeSetUp]
@@ -36,6 +37,7 @@ public class UserPasswordResetTests
 
         _userTable = _services.GetRequiredService<Actor.UserTable>();
         _table = _services.GetRequiredService<UserPasswordResetTable>();
+        _pwdTable = _services.GetRequiredService<UserPasswordTable>();
     }
 
     [OneTimeTearDown]
@@ -80,7 +82,7 @@ public class UserPasswordResetTests
 
         using( var ctx = new SqlStandardCallContext() )
         {
-            var loginRes = await _table.LoginUserAsync( ctx, userId, pwd );
+            var loginRes = await _pwdTable.LoginUserAsync( ctx, userId, pwd );
             loginRes.IsSuccess.ShouldBeTrue( "Login must succeed with the temporary password." );
         }
 
@@ -102,6 +104,22 @@ public class UserPasswordResetTests
         profile.IsTemporaryPassword.ShouldBeFalse( "A user with no password registration is not flagged." );
     }
 
+    [Test]
+    public async Task creating_a_password_with_the_flag_sets_it_right_away_Async()
+    {
+        // Exercises the PostCreate injection: the flag is written by the creation pass itself.
+        int userId;
+        using( var ctx = new SqlStandardCallContext() )
+        {
+            userId = await _userTable.CreateUserAsync( ctx, 1, Guid.NewGuid().ToString() );
+            var r = await _table.CreateOrUpdatePasswordUserAsync( ctx, 1, userId, "Initial$Pwd1", UCLMode.CreateOnly, isTemporary: true );
+            r.OperationResult.ShouldBe( UCResult.Created );
+        }
+
+        var profile = await ReadProfileAsync( userId );
+        profile.IsTemporaryPassword.ShouldBeTrue( "The created password has been flagged as temporary." );
+    }
+
     async Task<(int UserId, string UserName)> CreatePasswordUserAsync( string prefix )
     {
         var userName = $"{prefix}-{Guid.NewGuid()}";
@@ -109,7 +127,7 @@ public class UserPasswordResetTests
         {
             var userId = await _userTable.CreateUserAsync( ctx, 1, userName );
             userId.ShouldBeGreaterThan( 0 );
-            await _table.CreateOrUpdatePasswordUserAsync( ctx, 1, userId, "Initial$Pwd1", UCLMode.CreateOnly );
+            await _pwdTable.CreateOrUpdatePasswordUserAsync( ctx, 1, userId, "Initial$Pwd1", UCLMode.CreateOnly );
             return (userId, userName);
         }
     }
