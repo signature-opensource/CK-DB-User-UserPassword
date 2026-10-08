@@ -42,10 +42,10 @@ public class BasicLoginProviderTests
 
         var r = await p.LoginAsync( TestHelper.Monitor, "Basic", new BasicLoginPayload( userName, "the-password" ) );
         r.IsSuccess.ShouldBeTrue();
-        r.User!.UserId.ShouldBe( userId );
-        r.User.UserName.ShouldBe( userName );
-        r.User.Level.ShouldBe( AuthLevel.Critical );
-        r.User.HasScheme( "Basic" ).ShouldBeTrue();
+        r.Actor!.ActorId.ShouldBe( userId );
+        r.Actor.ActorName.ShouldBe( userName );
+        r.Actor.Level.ShouldBe( AuthLevel.Critical );
+        r.Actor.HasScheme( "Basic" ).ShouldBeTrue();
     }
 
     [Test]
