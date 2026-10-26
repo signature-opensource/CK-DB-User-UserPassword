@@ -7,8 +7,11 @@ namespace CK.IO.User.UserPassword;
 /// Changes the password of an existing password user.
 /// The actor must be the target user itself (ActorId must match UserId).
 /// Maps to <c>UserPasswordTable.SetPasswordAsync</c> which operates in <c>UCLMode.UpdateOnly</c>.
+/// <para>
+/// The user changes its own password: it is executed by the authentication center (<see cref="ICommandAuthCenter"/>).
+/// </para>
 /// </summary>
-public interface ISetPasswordCommand : ICommand<ICrisBasicCommandResult>, ICommandCurrentCulture, ICommandAuthNormal
+public interface ISetPasswordCommand : ICommand<ICrisBasicCommandResult>, ICommandCurrentCulture, ICommandAuthNormal, ICommandAuthCenter
 {
     /// <summary>
     /// Gets or sets the target user identifier. Must match the authenticated <c>ActorId</c>.
