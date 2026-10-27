@@ -8,8 +8,8 @@ namespace CK.IO.User.UserPassword;
 /// Maps to <c>UserPasswordTable.CreateOrUpdatePasswordUserAsync</c> with a <c>UCLMode</c>
 /// resolved from <see cref="CreationMode"/>, <see cref="WithCheckLogin"/> and <see cref="WithActualLogin"/>.
 /// <para>
-/// It sets the password of any user: this is provisioning, an administration command. It is not an
-/// <see cref="ICommandAuthCenter"/> (an authentication center is a login point, not an administration point).
+/// It sets the password of any user: this is provisioning, an administration command (an authentication center is a
+/// login point, not an administration point).
 /// </para>
 /// </summary>
 public interface ICreateOrUpdatePasswordCommand : ICommand<ICrisBasicCommandResult>, ICommandCurrentCulture, ICommandAuthNormal
