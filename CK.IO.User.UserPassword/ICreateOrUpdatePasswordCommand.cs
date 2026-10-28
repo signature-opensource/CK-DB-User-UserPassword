@@ -9,10 +9,11 @@ namespace CK.IO.User.UserPassword;
 /// resolved from <see cref="CreationMode"/>, <see cref="WithCheckLogin"/> and <see cref="WithActualLogin"/>.
 /// <para>
 /// It sets the password of any user: this is provisioning, an administration command (an authentication center is a
-/// login point, not an administration point).
+/// login point, not an administration point). A high-value action: it requires the
+/// <see cref="ICommandAuthCritical">Critical</see> level (a recent login), never reachable by a calling party alone.
 /// </para>
 /// </summary>
-public interface ICreateOrUpdatePasswordCommand : ICommand<ICrisBasicCommandResult>, ICommandCurrentCulture, ICommandAuthNormal
+public interface ICreateOrUpdatePasswordCommand : ICommand<ICrisBasicCommandResult>, ICommandCurrentCulture, ICommandAuthCritical
 {
     /// <summary>
     /// Gets or sets the target user identifier.
