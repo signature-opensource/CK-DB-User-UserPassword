@@ -84,6 +84,79 @@ public partial class Package
         }
     }
 
+    /// <summary>
+    /// The current user adds a password (create only).
+    /// </summary>
+    /// <param name="ctx">The call context to use.</param>
+    /// <param name="collector">The message collector.</param>
+    /// <param name="cmd">The command.</param>
+    /// <param name="table">The password table.</param>
+    /// <returns>The result.</returns>
+    [CommandHandler]
+    public virtual async Task<ICrisBasicCommandResult> HandleAddPasswordAsync( ISqlCallContext ctx, UserMessageCollector collector, IAddPasswordCommand cmd, UserPasswordTable table )
+    {
+        var res = cmd.CreateResult();
+        var actorId = cmd.ActorId.GetValueOrDefault();
+        try
+        {
+            var r = await table.CreateOrUpdatePasswordUserAsync( ctx, actorId, actorId, cmd.Password, UCLMode.CreateOnly );
+            if( r.OperationResult == UCResult.Created )
+            {
+                ctx.Monitor.Info( ActivityMonitor.Tags.SecurityCritical, $"User #{actorId} added a password." );
+                collector.Info( "The password has been added.", "User.PasswordAdded" );
+            }
+            else
+            {
+                collector.Error( "You already have a password: change it instead.", "User.PasswordExists" );
+            }
+        }
+        catch( Exception ex )
+        {
+            ctx.Monitor.Error( $"Error while adding the password of user #{actorId}.", ex );
+            collector.Error( "An error occurred while adding the password.", "User.PasswordAddFailed" );
+        }
+        res.SetUserMessages( collector );
+        return res;
+    }
+
+    /// <summary>
+    /// The current user removes its password. The user's last way to log in is never removed.
+    /// </summary>
+    /// <param name="ctx">The call context to use.</param>
+    /// <param name="collector">The message collector.</param>
+    /// <param name="cmd">The command.</param>
+    /// <param name="table">The password table.</param>
+    /// <returns>The result.</returns>
+    [CommandHandler]
+    public virtual async Task<ICrisBasicCommandResult> HandleRemovePasswordAsync( ISqlCallContext ctx, UserMessageCollector collector, IRemovePasswordCommand cmd, UserPasswordTable table )
+    {
+        var res = cmd.CreateResult();
+        var actorId = cmd.ActorId.GetValueOrDefault();
+        try
+        {
+            switch( await table.RemovePasswordAsync( ctx, actorId ) )
+            {
+                case PasswordRemoveResult.Removed:
+                    ctx.Monitor.Info( ActivityMonitor.Tags.SecurityCritical, $"User #{actorId} removed its password." );
+                    collector.Info( "The password has been removed.", "User.PasswordRemoved" );
+                    break;
+                case PasswordRemoveResult.LastLoginMethod:
+                    collector.Error( "Your password is your last way to log in: it cannot be removed.", "User.PasswordLastLoginMethod" );
+                    break;
+                default:
+                    collector.Error( "You have no password.", "User.NoPassword" );
+                    break;
+            }
+        }
+        catch( Exception ex )
+        {
+            ctx.Monitor.Error( $"Error while removing the password of user #{actorId}.", ex );
+            collector.Error( "An error occurred while removing the password.", "User.PasswordRemoveFailed" );
+        }
+        res.SetUserMessages( collector );
+        return res;
+    }
+
     UCLMode ResolveUCLMode( ICreateOrUpdatePasswordCommand cmd )
     {
         UCLMode mode = cmd.CreationMode switch

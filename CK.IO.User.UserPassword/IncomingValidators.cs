@@ -26,6 +26,28 @@ public class IncomingValidators : IRealObject
     }
 
     [IncomingValidator]
+    public virtual void ValidateAddPasswordCommand( UserMessageCollector collector, IAddPasswordCommand command )
+    {
+        if( string.IsNullOrWhiteSpace( command.Password ) )
+        {
+            collector.Error( "Invalid password.", "User.InvalidPassword" );
+        }
+        if( command.ActorId != command.ActualActorId )
+        {
+            collector.Error( "This is refused while impersonating.", "Authentication.Impersonated" );
+        }
+    }
+
+    [IncomingValidator]
+    public virtual void ValidateRemovePasswordCommand( UserMessageCollector collector, IRemovePasswordCommand command )
+    {
+        if( command.ActorId != command.ActualActorId )
+        {
+            collector.Error( "This is refused while impersonating.", "Authentication.Impersonated" );
+        }
+    }
+
+    [IncomingValidator]
     public virtual void ValidateCreateOrUpdateCommand( UserMessageCollector collector, ICreateOrUpdatePasswordCommand command )
     {
         if( command.UserId <= 0 )

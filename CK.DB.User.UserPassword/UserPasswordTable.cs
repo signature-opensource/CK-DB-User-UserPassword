@@ -224,6 +224,22 @@ public abstract partial class UserPasswordTable : SqlTable, IBasicAuthentication
     public abstract Task DestroyPasswordUserAsync( ISqlCallContext ctx, int actorId, int userId, CancellationToken cancellationToken = default( CancellationToken ) );
 
     /// <summary>
+    /// The actor removes its own password. The "last login method" rule applies (see
+    /// <see cref="PasswordRemoveResult.LastLoginMethod"/>).
+    /// </summary>
+    /// <param name="ctx">The call context to use.</param>
+    /// <param name="actorId">The acting actor identifier: the user that owns the password.</param>
+    /// <param name="cancellationToken">Optional cancellation token.</param>
+    /// <returns>The result.</returns>
+    public async Task<PasswordRemoveResult> RemovePasswordAsync( ISqlCallContext ctx, int actorId, CancellationToken cancellationToken = default )
+    {
+        return (PasswordRemoveResult)await DoRemovePasswordAsync( ctx, actorId, cancellationToken ).ConfigureAwait( false );
+    }
+
+    [SqlProcedure( "sUserPasswordRemove" )]
+    protected abstract Task<int> DoRemovePasswordAsync( ISqlCallContext ctx, int actorId, CancellationToken cancellationToken );
+
+    /// <summary>
     /// Low level stored procedure.
     /// This method should be used only if the standard password hasher and verification 
     /// mechanism is not used.

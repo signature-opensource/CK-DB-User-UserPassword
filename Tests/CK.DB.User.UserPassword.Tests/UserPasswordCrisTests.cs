@@ -99,6 +99,51 @@ public class UserPasswordCrisTests
         }
     }
 
+    [Test]
+    public async Task a_user_adds_a_password_and_cannot_remove_its_last_login_method_Async()
+    {
+        var user = _services.GetRequiredService<Actor.UserTable>();
+        int userId;
+        using( var ctx = new SqlStandardCallContext() )
+        {
+            userId = await user.CreateUserAsync( ctx, 1, Guid.NewGuid().ToString() );
+        }
+        // Each command in its own scope: the UserMessageCollector is scoped (the errors of a command must not leak).
+        async Task<ICrisBasicCommandResult> ExecuteAsync( ICrisBasicCommandResult? _, IAbstractCommand cmd )
+        {
+            await using var scope = SharedEngine.AutomaticServices.CreateAsyncScope();
+            var executor = scope.ServiceProvider.GetRequiredService<CrisExecutionContext>();
+            return (await executor.ExecuteRootCommandAsync( cmd )).WithResult<ICrisBasicCommandResult>().Result.ShouldNotBeNull();
+        }
+
+        // No password: nothing to remove.
+        var r = await ExecuteAsync( null, _pocoDir.Create<IRemovePasswordCommand>( c => { c.ActorId = userId; c.ActualActorId = userId; } ) );
+        r.Success.ShouldBeFalse();
+        r.UserMessages.ShouldContain( m => m.ResName == "User.NoPassword" );
+
+        // Added (create only): the user logs in with it.
+        r = await ExecuteAsync( null, _pocoDir.Create<IAddPasswordCommand>( c => { c.ActorId = userId; c.ActualActorId = userId; c.Password = "first"; } ) );
+        r.Success.ShouldBeTrue();
+        using( var ctx = new SqlStandardCallContext() )
+        {
+            (await _table.LoginUserAsync( ctx, userId, "first", actualLogin: false )).IsSuccess.ShouldBeTrue();
+        }
+        // Added again: refused (ISetPasswordCommand changes it).
+        r = await ExecuteAsync( null, _pocoDir.Create<IAddPasswordCommand>( c => { c.ActorId = userId; c.ActualActorId = userId; c.Password = "second"; } ) );
+        r.Success.ShouldBeFalse();
+        r.UserMessages.ShouldContain( m => m.ResName == "User.PasswordExists" );
+
+        // The password is the user's only way to log in: it is not removed.
+        r = await ExecuteAsync( null, _pocoDir.Create<IRemovePasswordCommand>( c => { c.ActorId = userId; c.ActualActorId = userId; } ) );
+        r.Success.ShouldBeFalse();
+        r.UserMessages.ShouldContain( m => m.ResName == "User.PasswordLastLoginMethod" );
+        using( var ctx = new SqlStandardCallContext() )
+        {
+            (await _table.LoginUserAsync( ctx, userId, "first", actualLogin: false )).IsSuccess.ShouldBeTrue();
+            await user.DestroyUserAsync( ctx, 1, userId );
+        }
+    }
+
     // The following methods test IncomingValidators.
     // They cannot be tested with the CrisExecutionContext.
     // This one use the RawCrisReceiver. The CK.DB.User.UserPassword SUT project has no
