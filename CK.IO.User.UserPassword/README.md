@@ -27,7 +27,7 @@ checked when the command is received, like any authentication level.
 
 A user interface must therefore expect a refusal when the login is not recent anymore and offer to log in again:
 
-- with an Authentication Center (CK.AppIdentity.Cris.AuthCenter), the lifetime of the `Critical` level is configured
+- with an Authentication Center (CK.AppIdentity.AuthCenter), the lifetime of the `Critical` level is configured
   per scheme ("AuthCenter:CriticalLifetime", "AuthCenter:CriticalLifetimes:&lt;scheme&gt;");
 - with WebFrontAuth (CK.AspNet.Auth), a login reaches `Critical` only for the schemes listed in
   `WebFrontAuthOptions.SchemesCriticalTimeSpan`: without it, these commands are always refused.
